@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Jev Evolution</title>
+    <meta name="description" content="An evolution simulation where Jev decides who survives, who mates, and how each organism dies." />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧬</text></svg>" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&family=Instrument+Serif&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <script>
+      try {
+        const theme = localStorage.getItem("jev-evolution-theme");
+        if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">Jev Evolution</div>
+
+        <label class="field">
+          <span class="sr-only">World or saved run</span>
+          <select id="run-select"></select>
+          <svg class="field-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5 L8 10.5 L12 6.5" /></svg>
+        </label>
+
+        <label class="field" id="era-field" hidden>
+          <span class="sr-only">Era</span>
+          <select id="era-select"></select>
+          <svg class="field-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5 L8 10.5 L12 6.5" /></svg>
+        </label>
+
+        <label class="field search">
+          <span class="sr-only">Find organism</span>
+          <svg class="field-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="6.7" cy="6.7" r="4.8" />
+            <path d="M10.1 10.1 l4.3 4.3" />
+          </svg>
+          <input id="search" type="search" placeholder="Find organism, e.g. c420" list="organism-ids" />
+        </label>
+        <datalist id="organism-ids"></datalist>
+
+        <div class="segmented" role="tablist" aria-label="Tree layout">
+          <span class="segmented-indicator" aria-hidden="true"></span>
+          <button type="button" role="tab" data-mode="rect" aria-selected="true">Rectangular</button>
+          <button type="button" role="tab" data-mode="radial" aria-selected="false" tabindex="-1">Radial</button>
+        </div>
+
+        <button type="button" class="theme-toggle" id="theme-toggle"></button>
+      </header>
+
+      <main class="workspace">
+        <section class="stage" aria-label="Phylogenetic tree">
+          <canvas id="tree"></canvas>
+
+          <div class="pick-banner" id="pick-banner" hidden>
+            <span>Click an organism to compare with A</span>
+            <button type="button" id="cancel-pick">Cancel</button>
+          </div>
+
+          <div class="stage-tools">
+            <div class="tool-group">
+              <button type="button" id="zoom-out" aria-label="Zoom out">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true"><path d="M2.2 8 h11.5" /></svg>
+              </button>
+              <span id="zoom-level" aria-live="polite">100%</span>
+              <button type="button" id="zoom-in" aria-label="Zoom in">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" aria-hidden="true"><path d="M8 2.2 v11.5 M2.2 8 h11.5" /></svg>
+              </button>
+            </div>
+            <div class="tool-group" id="row-tools">
+              <button type="button" id="rows-in" aria-label="Compress rows">Rows −</button>
+              <button type="button" id="rows-out" aria-label="Spread rows">Rows +</button>
+            </div>
+            <button type="button" class="tool-button" id="fit">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9.5 2 h4.5 v4.5 M14 2 L9.7 6.3" />
+                <path d="M6.5 14 H2 V9.5 M2 14 l4.3 -4.3" />
+              </svg>
+              Fit
+            </button>
+          </div>
+
+          <div class="stage-legend">
+            <div class="legend-gradient"><span>Vent</span><i></i><span>Desert</span></div>
+            <div class="legend-items">
+              <span><i class="dot alive"></i>Survived</span>
+              <span><i class="dot dead"></i>Died</span>
+              <span><i class="dot spared"></i>Spared</span>
+              <span><i class="dash"></i>Second parent</span>
+            </div>
+            <div class="legend-help">Scroll to pan. Pinch or ⌘ scroll to zoom. ⌥ scroll spreads rows. Shift-click to compare.</div>
+          </div>
+
+          <div class="tooltip" id="tooltip" hidden></div>
+        </section>
+
+        <aside class="inspector" id="inspector" aria-label="Inspector"></aside>
+      </main>
+
+      <footer class="timeline">
+        <button type="button" id="play" aria-label="Play"></button>
+        <input id="scrub" type="range" min="0" max="0" step="0.01" value="0" aria-label="Generation" />
+        <span id="gen-label"></span>
+
+        <div class="advance" id="advance" hidden>
+          <label class="field">
+            <span class="sr-only">What happens next</span>
+            <select id="event-select">
+              <option value="">Same world</option>
+              <option value="tidepools">Tidepool Shore</option>
+              <option value="iceAge">Ice Age</option>
+              <option value="rainforest">Flooded Rainforest</option>
+              <option value="deepOcean">Deep Ocean</option>
+              <option value="desert">Scorching Desert</option>
+            </select>
+            <svg class="field-chevron" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6.5 L8 10.5 L12 6.5" /></svg>
+          </label>
+          <button type="button" class="btn primary" id="advance-button">Next generation</button>
+        </div>
+      </footer>
+      <p class="advance-status" id="advance-status" role="status" hidden></p>
+
+      <div class="sr-only" id="announcer" aria-live="polite"></div>
+    </div>
+
+    <script type="module" src="./app.ts"></script>
+  </body>
+</html>

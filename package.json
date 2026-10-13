@@ -1,0 +1,21 @@
+{
+  "name": "jev-evolution",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "bun --env-file=$HOME/.aster/.env scripts/check.ts",
+    "evolve": "bun --env-file=$HOME/.aster/.env scripts/evolve.ts",
+    "chronicle": "bun --env-file=$HOME/.aster/.env scripts/chronicle.ts",
+    "serve": "bun scripts/serve.ts",
+    "build": "bun scripts/build.ts",
+    "dev": "bun scripts/build.ts && wrangler dev --port 8812",
+    "deploy": "bun scripts/build.ts && wrangler deploy",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.worker.json"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260917.1",
+    "@types/bun": "latest",
+    "typescript": "^5.6.0",
+    "wrangler": "4"
+  }
+}
